@@ -124,14 +124,14 @@ if uploaded_file is not None:
     # ---------------------------------------------------------
     # EQUIPO CRÍTICO (MENOR MTBF)
     # ---------------------------------------------------------
-    critical = result.loc[result["MTBF_"].idxmin()]
+    critical = result.loc[result["MTBF_Horas"].idxmin()]
     st.subheader("Equipo Crítico")
-    st.warning(f"Equipo: {critical['Equipo']}\n\nMTBF: {critical['MTBF_Dias']} días\n\nEventos: {critical['Eventos']}")
+    st.warning(f"Equipo: {critical['Equipo']}\n\nMTBF: {critical['MTBF_Horas']} horas\n\nEventos: {critical['Eventos']}")
 
     # ---------------------------------------------------------
     # CONCLUSIÓN AUTOMÁTICA
     # ---------------------------------------------------------
-    avg_mtbf = result["MTBF_"].mean()
+    avg_mtbf = result["MTBF_Horas"].mean()
     if avg_mtbf > 4320:
         conclusion = "Los activos presentan una confiabilidad adecuada. MTBF > 180 días."
     elif avg_mtbf > 2160:
