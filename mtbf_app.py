@@ -1,11 +1,15 @@
+# ---------------------------------------------------------
+# SAP PM MTBF Analytics con Streamlit + Seaborn/Matplotlib
+# ---------------------------------------------------------
+
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# ----------------------------------
-# CONFIG
-# ----------------------------------
-
+# ---------------------------------------------------------
+# CONFIGURACIÓN DE LA PÁGINA
+# ---------------------------------------------------------
 st.set_page_config(
     page_title="SAP MTBF Analytics",
     page_icon="📊",
@@ -20,289 +24,125 @@ st.markdown(
     """
 )
 
-# ----------------------------------
-# FILE UPLOAD
-# ----------------------------------
-
-uploaded_file = st.file_uploader(
-    "Cargar archivo CSV",
-    type=["csv"]
-)
+# ---------------------------------------------------------
+# CARGA DE ARCHIVO
+# ---------------------------------------------------------
+uploaded_file = st.file_uploader("Cargar archivo CSV", type=["csv"])
 
 if uploaded_file is not None:
-
-    # ----------------------------------
-    # READ FILE
-    # ----------------------------------
-
+    # Intentamos leer el archivo con separador ";" y codificación latin1
     try:
-        df = pd.read_csv(
-            uploaded_file,
-            sep=";",
-            encoding="latin1"
-        )
+        df = pd.read_csv(uploaded_file, sep=";", encoding="latin1")
     except:
         df = pd.read_csv(uploaded_file)
 
+    # Vista previa de los datos
     st.subheader("Vista previa de datos")
+    st.dataframe(df.head(), use_container_width=True)
 
-    st.dataframe(
-        df.head(),
-        use_container_width=True
-    )
-
-    # ----------------------------------
-    # COLUMN VALIDATION
-    # ----------------------------------
-
-    required_columns = [
-        "Equipo",
-        "Fecha de aviso"
-    ]
-
-    missing_columns = [
-        c for c in required_columns
-        if c not in df.columns
-    ]
+    # ---------------------------------------------------------
+    # VALIDACIÓN DE COLUMNAS NECESARIAS
+    # ---------------------------------------------------------
+    required_columns = ["Equipo", "Fecha de aviso"]
+    missing_columns = [c for c in required_columns if c not in df.columns]
 
     if missing_columns:
-
-        st.error(
-            f"Columnas faltantes: {missing_columns}"
-        )
-
+        st.error(f"Columnas faltantes: {missing_columns}")
         st.stop()
 
-    # ----------------------------------
-    # DATE FORMAT
-    # ----------------------------------
+    # ---------------------------------------------------------
+    # FORMATO DE FECHAS
+    # ---------------------------------------------------------
+    df["Fecha de aviso"] = pd.to_datetime(df["Fecha de aviso"], errors="coerce", dayfirst=True)
+    df = df.dropna(subset=["Fecha de aviso"])
 
-    df["Fecha de aviso"] = pd.to_datetime(
-        df["Fecha de aviso"],
-        errors="coerce",
-        dayfirst=True
-    )
-
-    df = df.dropna(
-        subset=["Fecha de aviso"]
-    )
-
-    # ----------------------------------
-    # MTBF CALCULATION
-    # ----------------------------------
-
+    # ---------------------------------------------------------
+    # CÁLCULO DE MTBF POR EQUIPO
+    # ---------------------------------------------------------
     mtbf_results = []
-
-    equipos = (
-        df["Equipo"]
-        .dropna()
-        .unique()
-    )
+    equipos = df["Equipo"].dropna().unique()
 
     for equipo in equipos:
+        temp = df[df["Equipo"] == equipo].sort_values("Fecha de aviso").copy()
+        temp["TBF"] = temp["Fecha de aviso"].diff().dt.days
 
-        temp = (
-            df[df["Equipo"] == equipo]
-            .sort_values("Fecha de aviso")
-            .copy()
-        )
+        # Solo calculamos MTBF si hay más de un evento
+        if len(temp) > 1:
+            mtbf = temp["TBF"].mean()
+        else:
+            mtbf = None
 
-        temp["TBF"] = (
-            temp["Fecha de aviso"]
-            .diff()
-            .dt.days
-        )
+        mtbf_results.append({
+            "Equipo": equipo,
+            "Eventos": len(temp),
+            "MTBF_Dias": round(mtbf, 2) if pd.notnull(mtbf) else None
+        })
 
-        mtbf = temp["TBF"].mean()
-
-        mtbf_results.append(
-            {
-                "Equipo": equipo,
-                "Eventos": len(temp),
-                "MTBF_Dias": round(mtbf, 2)
-                if pd.notnull(mtbf)
-                else None
-            }
-        )
-
-    result = pd.DataFrame(mtbf_results)
-
-    result = result.dropna()
+    result = pd.DataFrame(mtbf_results).dropna()
 
     if len(result) == 0:
-
-        st.warning(
-            "No existen suficientes eventos para calcular MTBF."
-        )
-
+        st.warning("No existen suficientes eventos para calcular MTBF.")
         st.stop()
 
-    # ----------------------------------
-    # KPIs
-    # ----------------------------------
-
+    # ---------------------------------------------------------
+    # INDICADORES PRINCIPALES
+    # ---------------------------------------------------------
     st.subheader("Indicadores")
-
     col1, col2, col3 = st.columns(3)
+    col1.metric("Equipos", len(result))
+    col2.metric("Avisos", len(df))
+    col3.metric("MTBF Promedio", f"{round(result['MTBF_Dias'].mean(),1)} días")
 
-    col1.metric(
-        "Equipos",
-        len(result)
-    )
-
-    col2.metric(
-        "Avisos",
-        len(df)
-    )
-
-    col3.metric(
-        "MTBF Promedio",
-        f"{round(result['MTBF_Dias'].mean(),1)} días"
-    )
-
-    # ----------------------------------
-    # RANKING
-    # ----------------------------------
-
+    # ---------------------------------------------------------
+    # TABLA DE RANKING COMPLETO
+    # ---------------------------------------------------------
     st.subheader("Ranking MTBF")
+    ranking = result.sort_values("MTBF_Dias", ascending=False)
+    # Mostramos todos los registros con scroll
+    st.dataframe(ranking, height=800, use_container_width=True)
 
-    ranking = result.sort_values(
-        "MTBF_Dias",
-        ascending=False
-    )
+    # ---------------------------------------------------------
+    # SCATTER PLOT (MTBF vs Eventos)
+    # ---------------------------------------------------------
+    st.subheader("MTBF vs Número de Eventos")
+    fig, ax = plt.subplots(figsize=(8,6))
+    sns.scatterplot(data=ranking, x="Eventos", y="MTBF_Dias", hue="Equipo", ax=ax)
+    ax.set_title("Relación entre MTBF y número de eventos")
+    st.pyplot(fig)
 
-    st.dataframe(
-        ranking,
-        use_container_width=True
-    )
+    # ---------------------------------------------------------
+    # PARETO DE EVENTOS (TODOS LOS EQUIPOS)
+    # ---------------------------------------------------------
+    st.subheader("Pareto de Equipos")
+    pareto = ranking.sort_values("Eventos", ascending=False)
+    fig2, ax2 = plt.subplots(figsize=(12,6))
+    sns.barplot(data=pareto, x="Equipo", y="Eventos", ax=ax2)
+    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=90)
+    ax2.set_title("Eventos por equipo (Pareto)")
+    st.pyplot(fig2)
 
-    # ----------------------------------
-    # SCATTER PLOT
-    # ----------------------------------
+    # ---------------------------------------------------------
+    # EQUIPO CRÍTICO (MENOR MTBF)
+    # ---------------------------------------------------------
+    critical = result.loc[result["MTBF_Dias"].idxmin()]
+    st.subheader("Equipo Crítico")
+    st.warning(f"Equipo: {critical['Equipo']}\n\nMTBF: {critical['MTBF_Dias']} días\n\nEventos: {critical['Eventos']}")
 
-    st.subheader(
-        "MTBF vs Número de Eventos"
-    )
-
-    fig_scatter = px.scatter(
-        ranking,
-        x="Eventos",
-        y="MTBF_Dias",
-        hover_name="Equipo",
-        trendline="ols"
-    )
-
-    st.plotly_chart(
-        fig_scatter,
-        use_container_width=True
-    )
-
-    # ----------------------------------
-    # PARETO
-    # ----------------------------------
-
-    st.subheader(
-        "Pareto de Equipos"
-    )
-
-    pareto = (
-        ranking
-        .sort_values(
-            "Eventos",
-            ascending=False
-        )
-        .head(15)
-    )
-
-    fig_bar = px.bar(
-        pareto,
-        x="Equipo",
-        y="Eventos"
-    )
-
-    st.plotly_chart(
-        fig_bar,
-        use_container_width=True
-    )
-
-    # ----------------------------------
-    # EQUIPO CRÍTICO
-    # ----------------------------------
-
-    critical = result.loc[
-        result["MTBF_Dias"].idxmin()
-    ]
-
-    st.subheader(
-        "Equipo Crítico"
-    )
-
-    st.warning(
-        f"""
-        Equipo: {critical['Equipo']}
-
-        MTBF: {critical['MTBF_Dias']} días
-
-        Eventos: {critical['Eventos']}
-        """
-    )
-
-    # ----------------------------------
+    # ---------------------------------------------------------
     # CONCLUSIÓN AUTOMÁTICA
-    # ----------------------------------
-
+    # ---------------------------------------------------------
     avg_mtbf = result["MTBF_Dias"].mean()
-
     if avg_mtbf > 180:
-
-        conclusion = """
-        Los activos presentan una
-        confiabilidad adecuada.
-
-        El MTBF promedio es superior
-        a 180 días.
-
-        Se recomienda mantener la
-        estrategia actual.
-        """
-
+        conclusion = "Los activos presentan una confiabilidad adecuada. MTBF > 180 días."
     elif avg_mtbf > 90:
-
-        conclusion = """
-        La confiabilidad es moderada.
-
-        Existen oportunidades para
-        optimizar los planes de
-        mantenimiento.
-        """
-
+        conclusion = "La confiabilidad es moderada. Existen oportunidades de optimización."
     else:
-
-        conclusion = """
-        La frecuencia de fallas es alta.
-
-        Se recomienda realizar análisis
-        de causa raíz y revisión de
-        estrategias de mantenimiento.
-        """
-
-    st.subheader(
-        "Conclusión Automática"
-    )
-
+        conclusion = "La frecuencia de fallas es alta. Se recomienda análisis de causa raíz."
+    st.subheader("Conclusión Automática")
     st.success(conclusion)
 
-    # ----------------------------------
-    # DOWNLOAD
-    # ----------------------------------
-
-    csv_download = ranking.to_csv(
-        index=False
-    )
-
-    st.download_button(
-        "Descargar Ranking MTBF",
-        csv_download,
-        "ranking_mtbf.csv",
-        "text/csv"
-    )
+    # ---------------------------------------------------------
+    # DESCARGA DE RESULTADOS
+    # ---------------------------------------------------------
+    csv_download = ranking.to_csv(index=False)
+    st.download_button("Descargar Ranking MTBF", csv_download, "ranking_mtbf.csv", "text/csv")
