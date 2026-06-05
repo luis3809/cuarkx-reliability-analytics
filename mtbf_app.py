@@ -64,7 +64,7 @@ if uploaded_file is not None:
 
     for equipo in equipos:
         temp = df[df["Equipo"] == equipo].sort_values("Fecha de aviso").copy()
-        temp["TBF"] = temp["Fecha de aviso"].diff().dt.days
+        temp["TBF"] = temp["Fecha de aviso"].diff().dt.total_seconds() / 3600
 
         # Solo calculamos MTBF si hay más de un evento
         if len(temp) > 1:
@@ -75,7 +75,7 @@ if uploaded_file is not None:
         mtbf_results.append({
             "Equipo": equipo,
             "Eventos": len(temp),
-            "MTBF_Dias": round(mtbf, 2) if pd.notnull(mtbf) else None
+            "MTBF_Horas": round(mtbf, 2) if pd.notnull(mtbf) else None
         })
 
     result = pd.DataFrame(mtbf_results).dropna()
@@ -91,13 +91,13 @@ if uploaded_file is not None:
     col1, col2, col3 = st.columns(3)
     col1.metric("Equipos", len(result))
     col2.metric("Avisos", len(df))
-    col3.metric("MTBF Promedio", f"{round(result['MTBF_Dias'].mean(),1)} días")
+    col3.metric("MTBF Promedio", f"{round(result['MTBF_Horas'].mean(),1)} Horas")
 
     # ---------------------------------------------------------
     # TABLA DE RANKING COMPLETO
     # ---------------------------------------------------------
     st.subheader("Ranking MTBF")
-    ranking = result.sort_values("MTBF_Dias", ascending=False)
+    ranking = result.sort_values("MTBF_Horas", ascending=False)
     # Mostramos todos los registros con scroll
     st.dataframe(ranking, height=800, use_container_width=True)
 
@@ -106,7 +106,7 @@ if uploaded_file is not None:
     # ---------------------------------------------------------
     st.subheader("MTBF vs Número de Eventos")
     fig, ax = plt.subplots(figsize=(8,6))
-    sns.scatterplot(data=ranking, x="Eventos", y="MTBF_Dias", hue="Equipo", ax=ax)
+    sns.scatterplot(data=ranking, x="Eventos", y="MTBF_Horas", hue="Equipo", ax=ax)
     ax.set_title("Relación entre MTBF y número de eventos")
     st.pyplot(fig)
 
@@ -131,10 +131,10 @@ if uploaded_file is not None:
     # ---------------------------------------------------------
     # CONCLUSIÓN AUTOMÁTICA
     # ---------------------------------------------------------
-    avg_mtbf = result["MTBF_Dias"].mean()
-    if avg_mtbf > 180:
+    avg_mtbf = result["MTBF_"].mean()
+    if avg_mtbf > 4320:
         conclusion = "Los activos presentan una confiabilidad adecuada. MTBF > 180 días."
-    elif avg_mtbf > 90:
+    elif avg_mtbf > 2160:
         conclusion = "La confiabilidad es moderada. Existen oportunidades de optimización."
     else:
         conclusion = "La frecuencia de fallas es alta. Se recomienda análisis de causa raíz."
