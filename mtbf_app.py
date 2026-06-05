@@ -124,7 +124,7 @@ if uploaded_file is not None:
     # ---------------------------------------------------------
     # EQUIPO CRÍTICO (MENOR MTBF)
     # ---------------------------------------------------------
-    critical = result.loc[result["MTBF_Dias"].idxmin()]
+    critical = result.loc[result["MTBF_"].idxmin()]
     st.subheader("Equipo Crítico")
     st.warning(f"Equipo: {critical['Equipo']}\n\nMTBF: {critical['MTBF_Dias']} días\n\nEventos: {critical['Eventos']}")
 
