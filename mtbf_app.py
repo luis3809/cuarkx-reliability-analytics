@@ -88,7 +88,7 @@ if file:
                       x="FechaAviso", 
                       y="DuracionParada", 
                       color="Equipo",
-                      title="Evolución temporal de MTBF por equipo"
+                      title="Evolución temporal de MTBF por equipo",
                       labels={"FechaAviso":"Fecha de aviso", "DuracionParada":"MTBF (horas)"})
     fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
     st.plotly_chart(fig_mtbf, use_container_width=True)
