@@ -111,13 +111,5 @@ if file:
         fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
                                title="Tiempo total de detención por equipo", text_auto=True)
         st.plotly_chart(fig_detencion, use_container_width=True)
-
-    # 5. Conclusión automática
-    avg_mtbf = result["MTBF_Horas"].mean()
-    if avg_mtbf and avg_mtbf > 4000:
-        conclusion = "✅ Alta confiabilidad (MTBF > 4000 horas)."
-    elif avg_mtbf and avg_mtbf > 2000:
-        conclusion = "⚠️ Confiabilidad moderada, existen oportunidades de mejora."
-    else:
-        conclusion = "❌ Frecuencia de fallas alta, se recomienda análisis de causa raíz."
-    st.success(conclusion)
+       
+      
