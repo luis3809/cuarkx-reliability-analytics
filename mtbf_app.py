@@ -1,23 +1,29 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import unicodedata
 
 st.set_page_config(page_title="Análisis MTBF", layout="wide")
 st.title("📊 Análisis MTBF - SAP PM (IW28/IW29)")
+
+# Función para quitar acentos
+def quitar_acentos(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFKD', texto)
+        if not unicodedata.combining(c)
+    )
 
 # 1. Cargar archivo
 file = st.file_uploader("Cargar archivo IW28/IW29 (CSV)", type=["csv"])
 if file:
     df = pd.read_csv(file, sep=";", encoding="latin1")
 
-    # Normalizar nombres de columnas: quitar espacios, acentos y pasar a minúsculas
+    # Normalizar nombres de columnas
     df.columns = (
         df.columns.str.strip()
-                  .str.lower()
-                  .str.replace(" ", "_")
-                  .str.normalize("NFKD")
-                  .str.encode("ascii", errors="ignore")
-                  .str.decode("utf-8")
+                  .map(quitar_acentos)   # elimina acentos
+                  .str.replace(" ", "_") # reemplaza espacios por _
+                  .str.lower()           # pasa a minúsculas
     )
 
     # Renombrar a nombres simples
@@ -34,8 +40,10 @@ if file:
 
     # Convertir fechas
     df["FechaAviso"] = pd.to_datetime(df["FechaAviso"], dayfirst=True, errors="coerce")
-    df["InicioAveria"] = pd.to_datetime(df["InicioAveria"], dayfirst=True, errors="coerce")
-    df["FinAveria"] = pd.to_datetime(df["FinAveria"], dayfirst=True, errors="coerce")
+    if "InicioAveria" in df.columns:
+        df["InicioAveria"] = pd.to_datetime(df["InicioAveria"], dayfirst=True, errors="coerce")
+    if "FinAveria" in df.columns:
+        df["FinAveria"] = pd.to_datetime(df["FinAveria"], dayfirst=True, errors="coerce")
 
     # Duración parada a numérico
     df["DuracionParada"] = df["DuracionParada"].astype(str).str.replace(",", ".").astype(float)
@@ -46,23 +54,31 @@ if file:
     # 2. Selección de periodo
     min_date, max_date = df["FechaAviso"].min(), df["FechaAviso"].max()
     start, end = st.date_input("Seleccionar periodo de evaluación", [min_date, max_date])
+
+    # Calcular horas totales del periodo
+    horas_periodo = (pd.to_datetime(end) - pd.to_datetime(start)).days * 24
+
     df_periodo = df[(df["FechaAviso"] >= pd.to_datetime(start)) & 
                     (df["FechaAviso"] <= pd.to_datetime(end))]
 
     # Filtrar solo avisos de tipo M2 (fallas)
-    df_periodo = df_periodo[df_periodo["ClaseAviso"] == "M2"]
+    if "ClaseAviso" in df.columns:
+        df_periodo = df_periodo[df_periodo["ClaseAviso"] == "M2"]
 
     # 3. Agrupación por equipo
     resultados = []
     for equipo, temp in df_periodo.groupby("Equipo"):
-        temp = temp.sort_values("FechaAviso")
-        temp["TBF"] = temp["FechaAviso"].diff().dt.total_seconds() / 3600  # horas
-        mtbf = temp["TBF"].mean() if len(temp) > 1 else None
+        n_fallas = len(temp)
+        tiempo_detencion = temp["DuracionParada"].sum()
+        tiempo_operacion = horas_periodo - tiempo_detencion
+        mtbf = tiempo_operacion / n_fallas if n_fallas > 0 else None
+
         resultados.append({
             "Equipo": equipo,
-            "Fallas (M2)": len(temp),
-            "Tiempo_Detencion_Total (h)": temp["DuracionParada"].sum(),
-            "MTBF_Horas": round(mtbf,2) if pd.notnull(mtbf) else None
+            "Fallas (M2)": n_fallas,
+            "Tiempo_Detencion_Total (h)": tiempo_detencion,
+            "Tiempo_Operacion (h)": tiempo_operacion,
+            "MTBF_Horas": round(mtbf, 2) if mtbf else None
         })
 
     result = pd.DataFrame(resultados)
@@ -92,9 +108,9 @@ if file:
 
     # 5. Conclusión automática
     avg_mtbf = result["MTBF_Horas"].mean()
-    if avg_mtbf > 4000:
+    if avg_mtbf and avg_mtbf > 4000:
         conclusion = "✅ Alta confiabilidad (MTBF > 4000 horas)."
-    elif avg_mtbf > 2000:
+    elif avg_mtbf and avg_mtbf > 2000:
         conclusion = "⚠️ Confiabilidad moderada, existen oportunidades de mejora."
     else:
         conclusion = "❌ Frecuencia de fallas alta, se recomienda análisis de causa raíz."
