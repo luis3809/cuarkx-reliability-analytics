@@ -90,10 +90,9 @@ if file:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        fig_mtbf = px.bar(result, x="Equipo", y="MTBF_Horas",
+        fig_mtbf = px.bar(result, x="Equipo", y="MTBF_Horas",ascending=False,
                           title="MTBF por equipo (horas)", text_auto=True)
         st.plotly_chart(fig_mtbf, use_container_width=True)
-
     with col3:
         fig_detencion = px.bar(result.sort_values("Tiempo_Detencion_Total (h)", ascending=False),
                                x="Equipo", y="Tiempo_Detencion_Total (h)",
