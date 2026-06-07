@@ -36,9 +36,7 @@ if file:
         "clase_de_aviso": "ClaseAviso"
     }, inplace=True)
 
-  #  st.write("Columnas renombradas:", df.columns.tolist())
-
-    # Convertir fechas
+      # Convertir fechas
     df["FechaAviso"] = pd.to_datetime(df["FechaAviso"], dayfirst=True, errors="coerce")
     if "InicioAveria" in df.columns:
         df["InicioAveria"] = pd.to_datetime(df["InicioAveria"], dayfirst=True, errors="coerce")
@@ -48,10 +46,8 @@ if file:
     # Duración parada a numérico
     df["DuracionParada"] = df["DuracionParada"].astype(str).str.replace(",", ".").astype(float)
 
-    st.subheader("Vista previa de datos")
-    #st.dataframe(df.head())
-
     # 2. Selección de periodo
+    st.write("### Selección de periodo de evaluación")
     min_date, max_date = df["FechaAviso"].min(), df["FechaAviso"].max()
     start, end = st.date_input("Seleccionar periodo de evaluación", [min_date, max_date])
 
