@@ -90,10 +90,15 @@ if file:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        df_mtbf = result.sort_values("MTBF_Horas", ascending=False)
-        fig_mtbf = px.bar(df_mtbf, x="Equipo", y="MTBF_Horas",
-                          title="MTBF por equipo (horas)", text_auto=True)
-        st.plotly_chart(fig_mtbf, use_container_width=True)
+    # Para cada equipo, graficar MTBF vs FechaAviso
+    fig_mtbf = px.scatter(df_periodo, 
+                          x="FechaAviso", 
+                          y="DuracionParada", 
+                          color="Equipo",
+                          title="Evolución temporal de MTBF por equipo",
+                          labels={"FechaAviso":"Fecha de aviso", "DuracionParada":"MTBF (horas)"})
+    fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
+    st.plotly_chart(fig_mtbf, use_container_width=True
 
     with col2:
         df_pareto = result.sort_values("Fallas (M2)", ascending=False)
