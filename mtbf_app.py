@@ -90,14 +90,29 @@ if file:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        fig_mtbf = px.bar(result, x="Equipo", y="MTBF_Horas",ascending=False,
+        df_mtbf = result.sort_values("MTBF_Horas", ascending=False)
+        fig_mtbf = px.bar(df_mtbf, x="Equipo", y="MTBF_Horas",
                           title="MTBF por equipo (horas)", text_auto=True)
         st.plotly_chart(fig_mtbf, use_container_width=True)
+
+    with col2:
+        df_pareto = result.sort_values("Fallas (M2)", ascending=False)
+        fig_pareto = px.bar(df_pareto, x="Equipo", y="Fallas (M2)",
+                            title="Pareto de fallas por equipo", text_auto=True)
+        st.plotly_chart(fig_pareto, use_container_width=True)
+
     with col3:
-        fig_detencion = px.bar(result.sort_values("Tiempo_Detencion_Total (h)", ascending=False),
-                               x="Equipo", y="Tiempo_Detencion_Total (h)",
+        df_detencion = result.sort_values("Tiempo_Detencion_Total (h)", ascending=False)
+        fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
                                title="Tiempo total de detención por equipo", text_auto=True)
         st.plotly_chart(fig_detencion, use_container_width=True)
 
-  
+    # 5. Conclusión automática
+    avg_mtbf = result["MTBF_Horas"].mean()
+    if avg_mtbf and avg_mtbf > 4000:
+        conclusion = "✅ Alta confiabilidad (MTBF > 4000 horas)."
+    elif avg_mtbf and avg_mtbf > 2000:
+        conclusion = "⚠️ Confiabilidad moderada, existen oportunidades de mejora."
+    else:
+        conclusion = "❌ Frecuencia de fallas alta, se recomienda análisis de causa raíz."
     st.success(conclusion)
