@@ -82,18 +82,19 @@ if file:
     st.subheader("Resultados consolidados por equipo")
     st.dataframe(result)
 
-    # 4. Visualizaciones
- # Gráfica MTBF en ancho completo
+   # 📊 Evolución temporal (fila completa arriba)
+st.subheader("Evolución temporal de MTBF")
 fig_mtbf = px.scatter(df_periodo, 
                       x="FechaAviso", 
                       y="DuracionParada", 
                       color="Equipo",
-                      title="Evolución temporal de MTBF por equipo",
+                      title="MTBF por equipo en el tiempo",
                       labels={"FechaAviso":"Fecha de aviso", "DuracionParada":"MTBF (horas)"})
 fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
 st.plotly_chart(fig_mtbf, use_container_width=True)
 
-# Ahora debajo, en columnas, Pareto y Detención
+# 📊 Segunda fila: Pareto y Detención en columnas
+st.subheader("Análisis comparativo de fallas y detenciones")
 col2, col3 = st.columns(2)
 
 with col2:
@@ -107,3 +108,22 @@ with col3:
     fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
                            title="Tiempo total de detención por equipo", text_auto=True)
     st.plotly_chart(fig_detencion, use_container_width=True)
+
+# 📊 Tercera fila: Matriz de disponibilidad
+st.subheader("Matriz de Disponibilidad")
+fig_heat = px.density_heatmap(result, x="Equipo", y="Fallas (M2)", z="Disponibilidad",
+                              color_continuous_scale="RdYlGn",
+                              title="Disponibilidad (%) por equipo")
+st.plotly_chart(fig_heat, use_container_width=True)
+
+# 📊 Cuarta fila: Clustering
+st.subheader("Clustering de Equipos por Confiabilidad")
+X = result[["MTBF_Horas","MTTR_Horas","Fallas (M2)"]].dropna()
+kmeans = KMeans(n_clusters=3, random_state=42)
+result["Cluster"] = kmeans.fit_predict(X)
+
+fig_cluster = px.scatter(result, x="MTBF_Horas", y="MTTR_Horas", color="Cluster",
+                         size="Tiempo_Detencion_Total (h)",
+                         hover_data=["Equipo","Disponibilidad"],
+                         title="Segmentación de Equipos")
+st.plotly_chart(fig_cluster, use_container_width=True)

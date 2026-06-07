@@ -3,3 +3,5 @@ pandas>=2.2.0
 plotly>=5.24.1
 scikit-learn>=1.5.0
 numpy>=1.26.0
+unicodedata2>=15.1.0   # para normalización de textos y acentos
+python-dateutil>=2.9.0 # manejo avanzado de fechas
