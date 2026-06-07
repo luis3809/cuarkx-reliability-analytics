@@ -107,10 +107,10 @@ st.plotly_chart(fig_mtbf, use_container_width=True)
       #                      title="Pareto de fallas por equipo", text_auto=True)
   #      st.plotly_chart(fig_pareto, use_container_width=True)
 
-    with col3:
-        df_detencion = result.sort_values("Tiempo_Detencion_Total (h)", ascending=False)
-        fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
-                               title="Tiempo total de detención por equipo", text_auto=True)
-        st.plotly_chart(fig_detencion, use_container_width=True)
+   # with col3:
+     #   df_detencion = result.sort_values("Tiempo_Detencion_Total (h)", ascending=False)
+      #  fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
+       #                        title="Tiempo total de detención por equipo", text_auto=True)
+        #st.plotly_chart(fig_detencion, use_container_width=True)
        
       
