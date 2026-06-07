@@ -9,7 +9,7 @@ st.title("📊 Análisis MTBF - SAP PM (IW28/IW29)")
 file = st.file_uploader("Cargar archivo IW28/IW29 (CSV)", type=["csv"])
 if file:
     df = pd.read_csv(file, sep=";", encoding="latin1")
-st.write("Columnas detectadas:", df.columns.tolist())
+
     # Normalizar nombres de columnas
     df.columns = df.columns.str.strip()
     df.rename(columns={
@@ -20,7 +20,7 @@ st.write("Columnas detectadas:", df.columns.tolist())
         "Duración parada": "DuracionParada",
         "Clase de aviso": "ClaseAviso"
     }, inplace=True)
-
+    st.write("Columnas detectadas:", df.columns.tolist())
     # Convertir fechas
     df["FechaAviso"] = pd.to_datetime(df["FechaAviso"], dayfirst=True, errors="coerce")
     df["InicioAveria"] = pd.to_datetime(df["InicioAveria"], dayfirst=True, errors="coerce")
