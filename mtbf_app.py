@@ -94,8 +94,9 @@ if file:
     st.plotly_chart(fig_mtbf, use_container_width=True)
 
 # Ahora debajo, en columnas, Pareto y Detención
-    col2, col3 = st.columns(2)
+col2, col3 = st.columns(2)
 
+# Luego usas cada columna
 with col2:
     df_pareto = result.sort_values("Fallas (M2)", ascending=False)
     fig_pareto = px.bar(df_pareto, x="Equipo", y="Fallas (M2)",
