@@ -91,14 +91,15 @@ if file:
 
     with col1:
         # Para cada equipo, graficar MTBF vs FechaAviso
-        fig_mtbf = px.scatter(df_periodo, 
-                          x="FechaAviso", 
-                          y="DuracionParada", 
-                          color="Equipo",
-                          title="Evolución temporal de MTBF por equipo",
-                          labels={"FechaAviso":"Fecha de aviso", "DuracionParada":"MTBF (horas)"})
-        fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
-        st.plotly_chart(fig_mtbf, use_container_width=True)
+      fig_mtbf = px.scatter(df_periodo, 
+                      x="FechaAviso", 
+                      y="DuracionParada", 
+                      color="Equipo",
+                      title="Evolución temporal de MTBF por equipo",
+                      labels={"FechaAviso":"Fecha de aviso", "DuracionParada":"MTBF (horas)"})
+      fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
+
+st.plotly_chart(fig_mtbf, use_container_width=True)
 
   #  with col2:
       #  df_pareto = result.sort_values("Fallas (M2)", ascending=False)
