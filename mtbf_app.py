@@ -10,36 +10,47 @@ file = st.file_uploader("Cargar archivo IW28/IW29 (CSV)", type=["csv"])
 if file:
     df = pd.read_csv(file, sep=";", encoding="latin1")
 
+    # Normalizar nombres de columnas
+    df.columns = df.columns.str.strip()
+    df.rename(columns={
+        "Denominación2": "Equipo",
+        "Fecha de aviso": "FechaAviso",
+        "Inicio avería": "InicioAveria",
+        "Fin de avería": "FinAveria",
+        "Duración parada": "DuracionParada",
+        "Clase de aviso": "ClaseAviso"
+    }, inplace=True)
+
     # Convertir fechas
-    df["Fecha de aviso"] = pd.to_datetime(df["Fecha de aviso"], dayfirst=True, errors="coerce")
-    df["Inicio avería"] = pd.to_datetime(df["Inicio avería"], dayfirst=True, errors="coerce")
-    df["Fin de avería"] = pd.to_datetime(df["Fin de avería"], dayfirst=True, errors="coerce")
+    df["FechaAviso"] = pd.to_datetime(df["FechaAviso"], dayfirst=True, errors="coerce")
+    df["InicioAveria"] = pd.to_datetime(df["InicioAveria"], dayfirst=True, errors="coerce")
+    df["FinAveria"] = pd.to_datetime(df["FinAveria"], dayfirst=True, errors="coerce")
 
     # Duración parada a numérico
-    df["Duración parada"] = df["Duración parada"].astype(str).str.replace(",", ".").astype(float)
+    df["DuracionParada"] = df["DuracionParada"].astype(str).str.replace(",", ".").astype(float)
 
     st.subheader("Vista previa de datos")
     st.dataframe(df.head())
 
     # 2. Selección de periodo
-    min_date, max_date = df["Fecha de aviso"].min(), df["Fecha de aviso"].max()
+    min_date, max_date = df["FechaAviso"].min(), df["FechaAviso"].max()
     start, end = st.date_input("Seleccionar periodo de evaluación", [min_date, max_date])
-    df_periodo = df[(df["Fecha de aviso"] >= pd.to_datetime(start)) & 
-                    (df["Fecha de aviso"] <= pd.to_datetime(end))]
+    df_periodo = df[(df["FechaAviso"] >= pd.to_datetime(start)) & 
+                    (df["FechaAviso"] <= pd.to_datetime(end))]
 
     # Filtrar solo avisos de tipo M2 (fallas)
-    df_periodo = df_periodo[df_periodo["Clase de aviso"] == "M2"]
+    df_periodo = df_periodo[df_periodo["ClaseAviso"] == "M2"]
 
-    # 3. Agrupación por equipo (Denominación2)
+    # 3. Agrupación por equipo
     resultados = []
-    for equipo, temp in df_periodo.groupby("Denominación2"):
-        temp = temp.sort_values("Fecha de aviso")
-        temp["TBF"] = temp["Fecha de aviso"].diff().dt.total_seconds() / 3600  # horas
+    for equipo, temp in df_periodo.groupby("Equipo"):
+        temp = temp.sort_values("FechaAviso")
+        temp["TBF"] = temp["FechaAviso"].diff().dt.total_seconds() / 3600  # horas
         mtbf = temp["TBF"].mean() if len(temp) > 1 else None
         resultados.append({
             "Equipo": equipo,
             "Fallas (M2)": len(temp),
-            "Tiempo_Detencion_Total (h)": temp["Duración parada"].sum(),
+            "Tiempo_Detencion_Total (h)": temp["DuracionParada"].sum(),
             "MTBF_Horas": round(mtbf,2) if pd.notnull(mtbf) else None
         })
 
