@@ -87,30 +87,27 @@ if file:
     st.dataframe(result)
 
     # 4. Visualizaciones
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        # Para cada equipo, graficar MTBF vs FechaAviso
-      fig_mtbf = px.scatter(df_periodo, 
+ # Gráfica MTBF en ancho completo
+fig_mtbf = px.scatter(df_periodo, 
                       x="FechaAviso", 
                       y="DuracionParada", 
                       color="Equipo",
                       title="Evolución temporal de MTBF por equipo",
                       labels={"FechaAviso":"Fecha de aviso", "DuracionParada":"MTBF (horas)"})
-      fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
-
+fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
 st.plotly_chart(fig_mtbf, use_container_width=True)
 
-  #  with col2:
-      #  df_pareto = result.sort_values("Fallas (M2)", ascending=False)
-      # fig_pareto = px.bar(df_pareto, x="Equipo", y="Fallas (M2)",
-      #                      title="Pareto de fallas por equipo", text_auto=True)
-  #      st.plotly_chart(fig_pareto, use_container_width=True)
+# Ahora debajo, en columnas, Pareto y Detención
+col2, col3 = st.columns(2)
 
-   # with col3:
-     #   df_detencion = result.sort_values("Tiempo_Detencion_Total (h)", ascending=False)
-      #  fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
-       #                        title="Tiempo total de detención por equipo", text_auto=True)
-        #st.plotly_chart(fig_detencion, use_container_width=True)
-       
-      
+with col2:
+    df_pareto = result.sort_values("Fallas (M2)", ascending=False)
+    fig_pareto = px.bar(df_pareto, x="Equipo", y="Fallas (M2)",
+                        title="Pareto de fallas por equipo", text_auto=True)
+    st.plotly_chart(fig_pareto, use_container_width=True)
+
+with col3:
+    df_detencion = result.sort_values("Tiempo_Detencion_Total (h)", ascending=False)
+    fig_detencion = px.bar(df_detencion, x="Equipo", y="Tiempo_Detencion_Total (h)",
+                           title="Tiempo total de detención por equipo", text_auto=True)
+    st.plotly_chart(fig_detencion, use_container_width=True)
