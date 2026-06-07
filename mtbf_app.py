@@ -10,17 +10,28 @@ file = st.file_uploader("Cargar archivo IW28/IW29 (CSV)", type=["csv"])
 if file:
     df = pd.read_csv(file, sep=";", encoding="latin1")
 
-    # Normalizar nombres de columnas
-    df.columns = df.columns.str.strip()
+    # Normalizar nombres de columnas: quitar espacios, acentos y pasar a minúsculas
+    df.columns = (
+        df.columns.str.strip()
+                  .str.lower()
+                  .str.replace(" ", "_")
+                  .str.normalize("NFKD")
+                  .str.encode("ascii", errors="ignore")
+                  .str.decode("utf-8")
+    )
+
+    # Renombrar a nombres simples
     df.rename(columns={
-        "Denominación2": "Equipo",
-        "Fecha de aviso": "FechaAviso",
-        "Inicio avería": "InicioAveria",
-        "Fin de avería": "FinAveria",
-        "Duración parada": "DuracionParada",
-        "Clase de aviso": "ClaseAviso"
+        "denominacion2": "Equipo",
+        "fecha_de_aviso": "FechaAviso",
+        "inicio_averia": "InicioAveria",
+        "fin_de_averia": "FinAveria",
+        "duracion_parada": "DuracionParada",
+        "clase_de_aviso": "ClaseAviso"
     }, inplace=True)
-    st.write("Columnas detectadas:", df.columns.tolist())
+
+    st.write("Columnas renombradas:", df.columns.tolist())
+
     # Convertir fechas
     df["FechaAviso"] = pd.to_datetime(df["FechaAviso"], dayfirst=True, errors="coerce")
     df["InicioAveria"] = pd.to_datetime(df["InicioAveria"], dayfirst=True, errors="coerce")
