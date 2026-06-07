@@ -9,7 +9,7 @@ st.title("📊 Análisis MTBF - SAP PM (IW28/IW29)")
 file = st.file_uploader("Cargar archivo IW28/IW29 (CSV)", type=["csv"])
 if file:
     df = pd.read_csv(file, sep=";", encoding="latin1")
-
+st.write("Columnas detectadas:", df.columns.tolist())
     # Normalizar nombres de columnas
     df.columns = df.columns.str.strip()
     df.rename(columns={
