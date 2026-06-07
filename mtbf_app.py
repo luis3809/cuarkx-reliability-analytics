@@ -36,7 +36,7 @@ if file:
         "clase_de_aviso": "ClaseAviso"
     }, inplace=True)
 
-    st.write("Columnas renombradas:", df.columns.tolist())
+  #  st.write("Columnas renombradas:", df.columns.tolist())
 
     # Convertir fechas
     df["FechaAviso"] = pd.to_datetime(df["FechaAviso"], dayfirst=True, errors="coerce")
@@ -49,7 +49,7 @@ if file:
     df["DuracionParada"] = df["DuracionParada"].astype(str).str.replace(",", ".").astype(float)
 
     st.subheader("Vista previa de datos")
-    st.dataframe(df.head())
+    #st.dataframe(df.head())
 
     # 2. Selección de periodo
     min_date, max_date = df["FechaAviso"].min(), df["FechaAviso"].max()
@@ -100,11 +100,11 @@ if file:
         fig_mtbf.update_traces(mode="lines+markers", line=dict(shape="linear"))
         st.plotly_chart(fig_mtbf, use_container_width=True)
 
-    with col2:
-        df_pareto = result.sort_values("Fallas (M2)", ascending=False)
-        fig_pareto = px.bar(df_pareto, x="Equipo", y="Fallas (M2)",
-                            title="Pareto de fallas por equipo", text_auto=True)
-        st.plotly_chart(fig_pareto, use_container_width=True)
+  #  with col2:
+      #  df_pareto = result.sort_values("Fallas (M2)", ascending=False)
+      # fig_pareto = px.bar(df_pareto, x="Equipo", y="Fallas (M2)",
+      #                      title="Pareto de fallas por equipo", text_auto=True)
+  #      st.plotly_chart(fig_pareto, use_container_width=True)
 
     with col3:
         df_detencion = result.sort_values("Tiempo_Detencion_Total (h)", ascending=False)
