@@ -17,7 +17,7 @@ def quitar_acentos(texto):
 file = st.file_uploader("Cargar archivo IW28/IW29 (CSV)", type=["csv"])
 if file:
     df = pd.read_csv(file, sep=";", encoding="latin1")
-
+    st.write("Columnas detectadas:", df.columns.tolist())
     # Normalizar nombres de columnas
     df.columns = (
         df.columns.str.strip()
@@ -25,7 +25,7 @@ if file:
                   .str.replace(" ", "_") # reemplaza espacios por _
                   .str.lower()           # pasa a minúsculas
     )
-
+  
     # Renombrar a nombres simples
     df.rename(columns={
         "denominacion2": "Equipo",
